@@ -6,7 +6,7 @@ import json
 from PIL import Image
 from io import BytesIO
 from chainlink_feeds.chainlink_feeds import ChainlinkFeeds
-
+import os
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -14,30 +14,39 @@ ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY")
 ARBISCAN_API_KEY = os.getenv("ARBISCAN_API_KEY")
 GATEWAY_BEARER_TOKEN  = os.getenv("GATEWAY_BEARER_TOKEN")
 rpc_url = 'https://rpc.eu-central-2.gateway.fm/v4/arbitrum/non-archival/arb1'
-
-
-
-# Set up the Streamlit layout
+st.set_page_config(layout="wide")
 st.title("NFT Data Viewer")
 
-contract_address = st.text_input("Enter Contract Address:", value="0xdf10ff40755ddbc17fa43ee425a41be3dd244f9c")
-# contract_address = st.text_input("Enter Contract Address:", value="0xfe8c1ac365ba6780aec5a985d989b327c27670a1")
 
-contract_address = Web3.to_checksum_address(contract_address)
-# token_id = st.number_input("Enter Token ID:", value=23982, step=1)
-token_id = st.number_input("Enter Token ID:", value=7, step=1)
-token_id = int(token_id)
-# Set up the connection to your Ethereum node (RPC)
-# rpc_url = 'https://arb1.arbitrum.io/'
+col1, col2, col3 = st.columns([5,5,10])
+with col1:
+    st.header("Main")
+with col2:
+    st.header("Metadata")
+with col3:
+    st.header("Image")
 
-session = requests.Session()
-session.headers.update({"Authorization": f"Bearer {GATEWAY_BEARER_TOKEN}"})
-custom_provider = HTTPProvider(endpoint_uri=rpc_url, session=session)
-web3 = Web3(custom_provider)
+# Set up the Streamlit layout
+with col1:
+    contract_address = st.text_input("Enter Contract Address:", value="0xdf10ff40755ddbc17fa43ee425a41be3dd244f9c")
+    # contract_address = st.text_input("Enter Contract Address:", value="0xfe8c1ac365ba6780aec5a985d989b327c27670a1")
+    contract_address = Web3.to_checksum_address(contract_address)
+    # token_id = st.number_input("Enter Token ID:", value=23982, step=1)
+    token_id = st.number_input("Enter Token ID:", value=7, step=1)
+    token_id = int(token_id)
+    # Set up the connection to your Ethereum node (RPC)
+    # rpc_url = 'https://arb1.arbitrum.io/'
+
+    session = requests.Session()
+    session.headers.update({"Authorization": f"Bearer {GATEWAY_BEARER_TOKEN}"})
+    custom_provider = HTTPProvider(endpoint_uri=rpc_url, session=session)
+    web3 = Web3(custom_provider)
 
 
 cf = ChainlinkFeeds()
-st.write(cf.get_latest_round_data(pair='ETH_USD'))
+with col2:
+    with st.expander("Current ethereum price query"):
+        st.write(cf.get_latest_round_data(pair='ETH_USD'))
 
 def get_abi_from_contr_addr(contract_address):
     # ABI_ENDPOINT = f'https://api.etherscan.io/api?module=contract&action=getabi&address={contract_address}&apikey={ETHERSCAN_API_KEY}'
@@ -46,9 +55,10 @@ def get_abi_from_contr_addr(contract_address):
     response_json = response.json()
     abi_json = response_json['result']
     contract_abi = web3.eth.contract(abi=abi_json).abi
-    with st.expander("contract_abi"):
-        st.write(contract_abi)
-    return contract_abi
+    with col2:
+        with st.expander("Contract ABI"):
+            st.write(contract_abi)
+        return contract_abi
 
 
 
@@ -59,9 +69,10 @@ if contract_address:
     # abi_json = '[{"inputs":[{"internalType":"address","name":"_logic","type":"address"},{"internalType":"address","name":"admin_","type":"address"},{"internalType":"bytes","name":"_data","type":"bytes"}],"stateMutability":"payable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"previousAdmin","type":"address"},{"indexed":false,"internalType":"address","name":"newAdmin","type":"address"}],"name":"AdminChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"beacon","type":"address"}],"name":"BeaconUpgraded","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"implementation","type":"address"}],"name":"Upgraded","type":"event"},{"stateMutability":"payable","type":"fallback"},{"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"admin_","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newAdmin","type":"address"}],"name":"changeAdmin","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"implementation","outputs":[{"internalType":"address","name":"implementation_","type":"address"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newImplementation","type":"address"}],"name":"upgradeTo","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newImplementation","type":"address"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"upgradeToAndCall","outputs":[],"stateMutability":"payable","type":"function"},{"stateMutability":"payable","type":"receive"}]'
     nft_contract = web3.eth.contract(address=contract_address, abi=abi_json)
     # if st.button("Fetch NFT Data"):
-    st.write("aaa")
     # nft_data = nft_contract.functions.tokenURI(token_id).call() 
-    st.write(list(nft_contract.functions))
+    with col2:
+        with st.expander("Contract Functions"):
+            st.write(list(nft_contract.functions))
 
     # nft_data = nft_contract.functions.getNFTData(token_id).call()
     # nft_data = nft_contract.functions.symbol(token_id).call()
@@ -72,7 +83,9 @@ if contract_address:
     balanceOf = nft_contract.functions.balanceOf(contract_address).call()
     # response = requests.get(token_uri)
     # nft_data = response.json()
-    st.write({"NFT Symbol": sym, "NFT Name" : name, "URI": uri, "Balance Of": balanceOf})
+    with col2:
+        with st.expander("Extra NFT Information"):
+            st.write({"NFT Symbol": sym, "NFT Name" : name, "URI": uri, "Balance Of": balanceOf})
     if len(uri) > 0:
         # api = ipfsApi.Client(host='https://ipfs.infura.io', port=5001)
         #OR 
@@ -90,14 +103,17 @@ if contract_address:
 
         if response.status_code == 200:
             data = response.content
-            st.write(data.decode('utf-8'))  # Assuming the data is UTF-8 encoded text
+            with col2:
+                with st.expander("Description"):
+                    st.write(data.decode('utf-8'))  # Assuming the data is UTF-8 encoded text
             data = json.loads(data)
             imgUri = data['image']
             im = imgUri.replace("ipfs://", "")
             im_url = ipfs_gateway_root + im
             response = requests.get(im_url)
             image = Image.open(BytesIO(response.content))
-            st.image(image, caption='IPFS Image', use_column_width=True)
+            with col3:
+                st.image(image, caption='IPFS Image', use_column_width=True)
 
 
 
