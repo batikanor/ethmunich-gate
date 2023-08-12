@@ -30,6 +30,9 @@ if 'embeddings' not in st.session_state:
 if 'img_embeddings' not in st.session_state:
     st.session_state['img_embeddings'] = dict()
 
+if 'names' not in st.session_state:
+    st.session_state['names'] = dict()
+
 col1, col2, col3 = st.columns([5,5,10])
 with col1:
     st.header("Main")
@@ -159,7 +162,7 @@ if contract_address:
     # nft_data = response.json()
     with col2:
         with st.expander("Extra NFT Information"):
-            st.write({"NFT Symbol": sym, "NFT Name" : name, "URI": uri, "Balance Of": balanceOf})
+            st.write({"NFT Symbol": sym, "Collection Name" : name, "URI": uri, "Balance Of": balanceOf})
     if len(uri) > 0:
         # api = ipfsApi.Client(host='https://ipfs.infura.io', port=5001)
         #OR 
@@ -186,6 +189,7 @@ if contract_address:
                 with st.expander("Description"):
                     resp_emb = get_embedding(' '.join([str(item) for item in response.content]))
                     st.session_state['embeddings'][im_url] = resp_emb
+                    st.session_state['names'][im_url] = data['name']
                     st.write(response.content.decode('utf-8'))  # Assuming the data is UTF-8 encoded text
 
             with st.container():
@@ -199,7 +203,7 @@ if contract_address:
 
                     
                     with col3:
-                        st.image(image, caption=name, use_column_width=True)
+                        st.image(image, caption=data['name'], use_column_width=True)
                         col31, col32, col33 = st.columns([10,5,10])
                         with col33:
                             try:
@@ -255,7 +259,7 @@ embeddings_2d = reduce_dimensions(embeddings, method='PCA')
 
 with colx1:
     st.write("Plotting PCA for DESCRIPTION EMBEDDINGS")
-    emb_keys_list = list(st.session_state['embeddings'].keys())
+    emb_keys_list = list(st.session_state['names'].values())
     plot_embeddings_2d(embeddings_2d, keys=emb_keys_list)
 def cluster_embeddings(embeddings, n_clusters=3):
     kmeans = KMeans(n_clusters=n_clusters)
