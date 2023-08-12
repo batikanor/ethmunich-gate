@@ -1,7 +1,6 @@
 import streamlit as st
 from web3 import Web3, HTTPProvider
 import requests
-import ipfsApi
 import json
 from PIL import Image
 from io import BytesIO
@@ -97,7 +96,7 @@ def decrement_string(s):
     return s
 
 # Test
-s = "hsfdks89aa"
+s = "hsfdks80aa"
 print(increment_string(s))  # Expected: hsfdks90aa
 print(decrement_string(s))  # Expected: hsfdks88aa
 # Set up the Streamlit layout
@@ -215,6 +214,7 @@ if contract_address:
                                 st.write("There's no next NFT")
                         with col31:
                             try:
+                                # st.write(ipfs_gateway_root + decrement_string(im))
                                 response = requests.get(ipfs_gateway_root + decrement_string(im))
                                 image = Image.open(BytesIO(response.content))
                                 st.image(image, caption='Previous NFT', use_column_width=True)
