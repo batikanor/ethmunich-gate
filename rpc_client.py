@@ -101,9 +101,9 @@ def decrement_string(s):
     return s
 
 # Test
-s = "hsfdks80aa"
-print(increment_string(s))  # Expected: hsfdks90aa
-print(decrement_string(s))  # Expected: hsfdks88aa
+# s = "hsfdks80aa"
+# print(increment_string(s))  # Expected: hsfdks90aa
+# print(decrement_string(s))  # Expected: hsfdks88aa
 # Set up the Streamlit layout
 with col1:
     contract_address = st.text_input("Enter Contract Address:", value="0xdf10ff40755ddbc17fa43ee425a41be3dd244f9c")
@@ -123,7 +123,7 @@ with col1:
 
 cf = ChainlinkFeeds()
 with col2:
-    with st.expander("Current ethereum price query"):
+    with st.expander("Current Ethereum Price Query"):
         st.write(cf.get_latest_round_data(pair='ETH_USD'))
 
 def get_abi_from_contr_addr(contract_address):
@@ -167,7 +167,7 @@ if contract_address:
     # nft_data = response.json()
     with col2:
         with st.expander("Extra NFT Information"):
-            st.write({"NFT Symbol": sym, "Collection Name" : name, "URI": uri, "Balance Of": balanceOf})
+            st.write({"NFT Symbol": sym, "Collection Name" : name, "URI": uri})
     if len(uri) > 0:
         # api = ipfsApi.Client(host='https://ipfs.infura.io', port=5001)
         #OR 
