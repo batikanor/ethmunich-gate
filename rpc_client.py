@@ -28,7 +28,7 @@ if 'embeddings' not in st.session_state:
     st.session_state['embeddings'] = dict()
 
 if 'img_embeddings' not in st.session_state:
-    st.sesion_state['img_embeddings'] = dict()
+    st.session_state['img_embeddings'] = dict()
 
 col1, col2, col3 = st.columns([5,5,10])
 with col1:
@@ -184,6 +184,12 @@ if contract_address:
                 try:
                     response = requests.get(im_url)
                     image = Image.open(BytesIO(response.content))
+                    imemb = get_image_embedding(image)
+
+                    # st.session_state['img_embeddings'][im_url] = image
+                    st.session_state['img_embeddings'][im_url] = imemb
+
+                    
                     with col3:
                         st.image(image, caption=name, use_column_width=True)
                         col31, col32, col33 = st.columns([10,5,10])
@@ -201,14 +207,21 @@ if contract_address:
                                 st.image(image, caption='Previous NFT', use_column_width=True)
                             except:
                                 st.write("There's no previous NFT")
-                except:
-                    st.write("This nft doesn't exist")
+                except Exception as err:
+                    with st.expander("NFT couldn't be plotted."):
+                        st.write(err)
+
 
             with col2:
-                with st.expander("Embeddings"):
+                with st.expander("Description Embeddings"):
                     for k,v in st.session_state['embeddings'].items():
-                        if st.checkbox(f"Show: {k}"):
+                        if st.checkbox(f"Show D. Emb.: {k}"):
                             st.write(v)
+                with st.expander("Image Embeddings"):
+                    for k,v in st.session_state['img_embeddings'].items():
+                        if st.checkbox(f"Show  I. Emb.: {k}"):
+                            st.write(v)
+
 
 
 
@@ -222,13 +235,34 @@ embeddings = list(st.session_state['embeddings'].values())
 embeddings_2d = reduce_dimensions(embeddings, method='PCA')
 
 # Plot in Streamlit
+st.write("Plotting PCA for DESCRIPTION EMBEDDINGS")
 plot_embeddings_2d(embeddings_2d)
 def cluster_embeddings(embeddings, n_clusters=3):
     kmeans = KMeans(n_clusters=n_clusters)
     return kmeans.fit_predict(embeddings)
 
 labels = cluster_embeddings(embeddings_2d)
+st.write("Plotting CLUSTERING for DESCRIPTION EMBEDDINGS")
 plot_embeddings_2d(embeddings_2d, labels)
+
+
+
+
+st.write("Plotting PCA for IMAGE EMBEDDINGS")
+
+img_embeddings = list(st.session_state['img_embeddings'].values())
+img_embeddings_array = np.array(img_embeddings)
+
+# img_embeddings_reshaped = img_embeddings_array.reshape(img_embeddings_array.shape[0], -1)
+img_embeddings_reshaped = img_embeddings_array
+
+img_embeddings_2d = reduce_dimensions(img_embeddings_reshaped, method='PCA')
+plot_embeddings_2d(img_embeddings_2d)
+
+st.write("Plotting CLUSTERING for IMAGE EMBEDDINGS")
+
+labels = cluster_embeddings(img_embeddings_2d)
+plot_embeddings_2d(img_embeddings_2d, labels)
 
 
 

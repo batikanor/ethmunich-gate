@@ -28,6 +28,7 @@ from sklearn.manifold import TSNE
 import torchvision.models as models
 import torchvision.transforms as transforms
 from PIL import Image
+import copy
 
 
 # Load pretrained ResNet50 model + higher level layers
@@ -42,16 +43,30 @@ resnettransformer = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-
 def get_image_embedding(pil_img):
+    # Ensure the image is in RGB format
+    if pil_img.mode != "RGB":
+        pil_img = pil_img.convert("RGB")
+    
     # Open and preprocess the image
-    image = pil_img
-    image = resnettransformer(image).unsqueeze(0)  # Transform the image and add batch dimension
+    imimim = copy.deepcopy(pil_img)
+    imimim = resnettransformer(imimim).unsqueeze(0)  # Transform the image and add batch dimension
 
     # Extract the embedding
     with torch.no_grad():
-        embedding = resnetmodel(image)
+        embedding = resnetmodel(imimim)
     return embedding.squeeze().numpy()  # Convert the tensor to numpy array
+
+# def get_image_embedding(pil_img):
+#     # Open and preprocess the image
+#     imimim = copy.deepcopy(pil_img)
+#     imimim = resnettransformer(imimim).unsqueeze(0)  # Transform the image and add batch dimension
+
+#     # Extract the embedding
+#     with torch.no_grad():
+#         embedding = resnetmodel(imimim)
+#     return embedding.squeeze().numpy()  # Convert the tensor to numpy array
+
 
 
 # Initialize the pre-trained model and tokenizer
