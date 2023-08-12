@@ -238,40 +238,53 @@ if contract_address:
 
         else:
             st.write("Failed to retrieve data from IPFS")
+
+
+
+
+colx1, colx2, colxempty, colx3, colx4 = st.columns([4,4,2,4,4])
+
+
 # Reduce to 2D
 embeddings = list(st.session_state['embeddings'].values())
 embeddings_2d = reduce_dimensions(embeddings, method='PCA')
 
+
 # Plot in Streamlit
-st.write("Plotting PCA for DESCRIPTION EMBEDDINGS")
-emb_keys_list = list(st.session_state['embeddings'].keys())
-plot_embeddings_2d(embeddings_2d, keys=emb_keys_list)
+
+
+with colx1:
+    st.write("Plotting PCA for DESCRIPTION EMBEDDINGS")
+    emb_keys_list = list(st.session_state['embeddings'].keys())
+    plot_embeddings_2d(embeddings_2d, keys=emb_keys_list)
 def cluster_embeddings(embeddings, n_clusters=3):
     kmeans = KMeans(n_clusters=n_clusters)
     return kmeans.fit_predict(embeddings)
 
 labels = cluster_embeddings(embeddings_2d)
-st.write("Plotting CLUSTERING for DESCRIPTION EMBEDDINGS")
-plot_embeddings_2d(embeddings_2d, labels)
+with colx2:
+    st.write("Plotting CLUSTERING for DESCRIPTION EMBEDDINGS")
+    plot_embeddings_2d(embeddings_2d, labels)
 
 
 
+with colx3:
+    st.write("Plotting PCA for IMAGE EMBEDDINGS")
 
-st.write("Plotting PCA for IMAGE EMBEDDINGS")
+    img_embeddings = list(st.session_state['img_embeddings'].values())
+    img_embeddings_array = np.array(img_embeddings)
 
-img_embeddings = list(st.session_state['img_embeddings'].values())
-img_embeddings_array = np.array(img_embeddings)
+    # img_embeddings_reshaped = img_embeddings_array.reshape(img_embeddings_array.shape[0], -1)
+    img_embeddings_reshaped = img_embeddings_array
 
-# img_embeddings_reshaped = img_embeddings_array.reshape(img_embeddings_array.shape[0], -1)
-img_embeddings_reshaped = img_embeddings_array
+    img_embeddings_2d = reduce_dimensions(img_embeddings_reshaped, method='PCA')
+    plot_embeddings_2d(img_embeddings_2d)
 
-img_embeddings_2d = reduce_dimensions(img_embeddings_reshaped, method='PCA')
-plot_embeddings_2d(img_embeddings_2d)
+with colx4:
+    st.write("Plotting CLUSTERING for IMAGE EMBEDDINGS")
 
-st.write("Plotting CLUSTERING for IMAGE EMBEDDINGS")
-
-labels = cluster_embeddings(img_embeddings_2d)
-plot_embeddings_2d(img_embeddings_2d, labels)
+    labels = cluster_embeddings(img_embeddings_2d)
+    plot_embeddings_2d(img_embeddings_2d, labels)
 
 
 
