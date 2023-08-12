@@ -243,19 +243,12 @@ if contract_address:
 
 
 
-
-
-
         else:
             st.write("Failed to retrieve data from IPFS")
 
 
 
 
-# colx2, colxempty, colx4 = st.columns([10,2,10])
-
-
-# Reduce to 2D
 emb_ct = len(st.session_state['embeddings'].items())
 if emb_ct > 1:
     embeddings = list(st.session_state['embeddings'].values())
@@ -298,29 +291,29 @@ if emb_ct > 1:
         with colad0:
             st.write("The Used Method")
         with cola20:
-            st.write("Plotting PCA & CLUSTERING for IMAGE EMBEDDINGS")
+            st.write("For Image Embeddings")
 
     with st.container():
         cola01,colad1,cola21 = st.columns([3,2,3])
         with cola01:
-            labels = cluster_embeddings(img_embeddings_2d, method="KMEANS")
+            labels = cluster_embeddings(embeddings, method="KMEANS")
             plot_embeddings_2d(embeddings_2d,keys=emb_keys_list, labels=labels)
         with colad1:
             st.write("KMeans Clustering: KMeans is an iterative clustering method that partitions data into k distinct clusters based on distance to the nearest centroid. It involves repeatedly assigning points to clusters and recalculating centroids until convergence. One challenge is the need to pre-specify k, and results can vary based on initial centroid placement.")
         with cola21:
-            labels = cluster_embeddings(img_embeddings_2d, method="KMEANS")
+            labels = cluster_embeddings(img_embeddings_reshaped, method="KMEANS")
             plot_embeddings_2d(img_embeddings_2d, keys=emb_keys_list, labels=labels)
 
 
     with st.container():
         cola02,colad2,cola22 = st.columns([3,2,3])
         with cola02:
-            labels = cluster_embeddings(img_embeddings_2d, method="AGGL")
+            labels = cluster_embeddings(embeddings, method="AGGL")
             plot_embeddings_2d(embeddings_2d,keys=emb_keys_list, labels=labels)
         with colad2:
             st.write("Agglomerative Hierarchical Clustering: This method builds a hierarchy of clusters by successively merging or splitting groups. The dendrogram is a useful tool for understanding the hierarchy.")
         with cola22:
-            labels = cluster_embeddings(img_embeddings_2d, method="AGGL")
+            labels = cluster_embeddings(img_embeddings_reshaped, method="AGGL")
             plot_embeddings_2d(img_embeddings_2d, keys=emb_keys_list, labels=labels)
 
 
@@ -328,37 +321,37 @@ if emb_ct > 1:
     with st.container():
         cola03,colad3,cola23 = st.columns([3,2,3])
         with cola03:
-            labels = cluster_embeddings(img_embeddings_2d, method="DBSCAN")
+            labels = cluster_embeddings(embeddings, method="DBSCAN")
             plot_embeddings_2d(embeddings_2d,keys=emb_keys_list, labels=labels)
         with colad3:
             st.write("DBSCAN (Density-Based Spatial Clustering of Applications with Noise): Groups together points that are close to each other based on a distance measure (usually Euclidean) and a minimum number of points. It also marks as outliers the points that are in low-density regions.")
         with cola23:
-            labels = cluster_embeddings(img_embeddings_2d, method="DBSCAN")
+            labels = cluster_embeddings(img_embeddings_reshaped, method="DBSCAN")
             plot_embeddings_2d(img_embeddings_2d, keys=emb_keys_list, labels=labels)
 
 
     with st.container():
         cola04,colad4,cola24 = st.columns([3,2,3])
         with cola04:
-            labels = cluster_embeddings(img_embeddings_2d, method="OPTICS")
+            labels = cluster_embeddings(embeddings, method="OPTICS")
             plot_embeddings_2d(embeddings_2d,keys=emb_keys_list, labels=labels)
         with colad4:
             st.write("OPTICS (Ordering Points To Identify the Clustering Structure): Similar to DBSCAN but doesn’t require setting an eps value. It instead requires setting a minimum number of points to form a cluster.")
         with cola24:
-            labels = cluster_embeddings(img_embeddings_2d, method="OPTICS")
+            labels = cluster_embeddings(img_embeddings_reshaped, method="OPTICS")
             plot_embeddings_2d(img_embeddings_2d, keys=emb_keys_list, labels=labels)
 
 
     with st.container():
         cola05,colad5,cola25 = st.columns([3,2,3])
         with cola05:
-            labels = cluster_embeddings(img_embeddings_2d, method="GMM")
+            labels = cluster_embeddings(embeddings, method="GMM")
             plot_embeddings_2d(embeddings_2d,keys=emb_keys_list, labels=labels)
         with colad5:
             st.write("Gaussian Mixture Models (GMM): Assumes that the data is generated from a mixture of several Gaussian distributions. Can be viewed as a generalization of k-means that incorporates information about the covariance structure of the data.")
 
         with cola25:
-            labels = cluster_embeddings(img_embeddings_2d, method="GMM")
+            labels = cluster_embeddings(img_embeddings_reshaped, method="GMM")
             plot_embeddings_2d(img_embeddings_2d, keys=emb_keys_list, labels=labels)
 
 
