@@ -7,7 +7,15 @@ from PIL import Image
 from io import BytesIO
 from chainlink_feeds.chainlink_feeds import ChainlinkFeeds
 import os
+import re
+from ml_utils import get_embedding, get_image_embedding
 from dotenv import load_dotenv
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.cluster import KMeans
+from ml_utils import reduce_dimensions
+
+
 load_dotenv()
 
 ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY")
@@ -16,7 +24,11 @@ GATEWAY_BEARER_TOKEN  = os.getenv("GATEWAY_BEARER_TOKEN")
 rpc_url = 'https://rpc.eu-central-2.gateway.fm/v4/arbitrum/non-archival/arb1'
 st.set_page_config(layout="wide")
 st.title("NFT Data Viewer")
+if 'embeddings' not in st.session_state:
+    st.session_state['embeddings'] = dict()
 
+if 'img_embeddings' not in st.session_state:
+    st.sesion_state['img_embeddings'] = dict()
 
 col1, col2, col3 = st.columns([5,5,10])
 with col1:
@@ -26,6 +38,60 @@ with col2:
 with col3:
     st.header("Image")
 
+
+
+def plot_embeddings_2d(embeddings_2d, labels=None):
+    fig, ax = plt.subplots()
+
+    # If labels are provided, use them for coloring
+    if labels is not None:
+        unique_labels = np.unique(labels)
+        for i, label in enumerate(unique_labels):
+            idxs = [idx for idx, val in enumerate(labels) if val == label]
+            ax.scatter(embeddings_2d[idxs, 0], embeddings_2d[idxs, 1], label=label)
+    else:
+        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1])
+
+    ax.set_title("2D visualization of embeddings")
+    if labels is not None:
+        ax.legend()
+
+    st.pyplot(fig)
+
+
+
+def increment_string(s):
+    # Find all the numbers in the string
+    numbers = re.findall(r'\d+', s)
+    if not numbers:
+        return s
+    
+    # Take the last number
+    last_number = numbers[-1]
+    incremented_number = str(int(last_number) + 1)
+    
+    # Replace only the last occurrence of the number with incremented number
+    s = s[::-1].replace(last_number[::-1], incremented_number[::-1], 1)[::-1]
+    return s
+
+def decrement_string(s):
+    # Find all the numbers in the string
+    numbers = re.findall(r'\d+', s)
+    if not numbers:
+        return s
+
+    # Take the last number
+    last_number = numbers[-1]
+    decremented_number = str(int(last_number) - 1) if int(last_number) > 0 else "0"
+
+    # Replace only the last occurrence of the number with decremented number
+    s = s[::-1].replace(last_number[::-1], decremented_number[::-1], 1)[::-1]
+    return s
+
+# Test
+s = "hsfdks89aa"
+print(increment_string(s))  # Expected: hsfdks90aa
+print(decrement_string(s))  # Expected: hsfdks88aa
 # Set up the Streamlit layout
 with col1:
     contract_address = st.text_input("Enter Contract Address:", value="0xdf10ff40755ddbc17fa43ee425a41be3dd244f9c")
@@ -100,20 +166,49 @@ if contract_address:
 
         # Send a request to the gateway to retrieve the data
         response = requests.get(ipfs_gateway_url)
-
         if response.status_code == 200:
             data = response.content
-            with col2:
-                with st.expander("Description"):
-                    st.write(data.decode('utf-8'))  # Assuming the data is UTF-8 encoded text
+
             data = json.loads(data)
             imgUri = data['image']
             im = imgUri.replace("ipfs://", "")
             im_url = ipfs_gateway_root + im
-            response = requests.get(im_url)
-            image = Image.open(BytesIO(response.content))
-            with col3:
-                st.image(image, caption='IPFS Image', use_column_width=True)
+
+            with col2:
+                with st.expander("Description"):
+                    resp_emb = get_embedding(' '.join([str(item) for item in response.content]))
+                    st.session_state['embeddings'][im_url] = resp_emb
+                    st.write(response.content.decode('utf-8'))  # Assuming the data is UTF-8 encoded text
+
+            with st.container():
+                try:
+                    response = requests.get(im_url)
+                    image = Image.open(BytesIO(response.content))
+                    with col3:
+                        st.image(image, caption=name, use_column_width=True)
+                        col31, col32, col33 = st.columns([10,5,10])
+                        with col33:
+                            try:
+                                response = requests.get(ipfs_gateway_root + increment_string(im))
+                                image = Image.open(BytesIO(response.content))
+                                st.image(image, caption='Next NFT', use_column_width=True)
+                            except:
+                                st.write("There's no next NFT")
+                        with col31:
+                            try:
+                                response = requests.get(ipfs_gateway_root + decrement_string(im))
+                                image = Image.open(BytesIO(response.content))
+                                st.image(image, caption='Previous NFT', use_column_width=True)
+                            except:
+                                st.write("There's no previous NFT")
+                except:
+                    st.write("This nft doesn't exist")
+
+            with col2:
+                with st.expander("Embeddings"):
+                    for k,v in st.session_state['embeddings'].items():
+                        if st.checkbox(f"Show: {k}"):
+                            st.write(v)
 
 
 
@@ -122,8 +217,18 @@ if contract_address:
 
         else:
             st.write("Failed to retrieve data from IPFS")
+# Reduce to 2D
+embeddings = list(st.session_state['embeddings'].values())
+embeddings_2d = reduce_dimensions(embeddings, method='PCA')
 
+# Plot in Streamlit
+plot_embeddings_2d(embeddings_2d)
+def cluster_embeddings(embeddings, n_clusters=3):
+    kmeans = KMeans(n_clusters=n_clusters)
+    return kmeans.fit_predict(embeddings)
 
+labels = cluster_embeddings(embeddings_2d)
+plot_embeddings_2d(embeddings_2d, labels)
 
 
 
