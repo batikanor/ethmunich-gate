@@ -23,7 +23,8 @@ ARBISCAN_API_KEY = os.getenv("ARBISCAN_API_KEY")
 GATEWAY_BEARER_TOKEN  = os.getenv("GATEWAY_BEARER_TOKEN")
 rpc_url = 'https://rpc.eu-central-2.gateway.fm/v4/arbitrum/non-archival/arb1'
 st.set_page_config(layout="wide")
-st.title("NFT Data Viewer")
+st.title(':female-detective:    Nft _Similarity_ :blue[Detective]    :male-detective:')
+st.divider()
 if 'embeddings' not in st.session_state:
     st.session_state['embeddings'] = dict()
 
@@ -33,7 +34,7 @@ if 'img_embeddings' not in st.session_state:
 if 'names' not in st.session_state:
     st.session_state['names'] = dict()
 
-col1, col2, col3 = st.columns([5,5,10])
+col1, col2, col3 = st.columns([6,8,10])
 with col1:
     st.header("Main")
 with col2:
@@ -55,9 +56,9 @@ def plot_embeddings_2d(embeddings_2d, keys=None, labels=None):
     else:
         ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1])
         # Annotate each point with its key if keys are provided
-        if keys is not None:
-            for idx, key in enumerate(keys):
-                ax.annotate(key, (embeddings_2d[idx, 0], embeddings_2d[idx, 1]))
+    if keys is not None:
+        for idx, key in enumerate(keys):
+            ax.annotate(key, (embeddings_2d[idx, 0], embeddings_2d[idx, 1]))
 
     ax.set_title("2D visualization of embeddings")
     if labels is not None:
@@ -204,7 +205,7 @@ if contract_address:
                     
                     with col3:
                         st.image(image, caption=data['name'], use_column_width=True)
-                        col31, col32, col33 = st.columns([10,5,10])
+                        col31, col32, col33 = st.columns([10,1,10])
                         with col33:
                             try:
                                 response = requests.get(ipfs_gateway_root + increment_string(im))
@@ -246,49 +247,46 @@ if contract_address:
 
 
 
-colx1, colx2, colxempty, colx3, colx4 = st.columns([4,4,2,4,4])
+colx2, colxempty, colx4 = st.columns([10,2,10])
 
 
 # Reduce to 2D
-embeddings = list(st.session_state['embeddings'].values())
-embeddings_2d = reduce_dimensions(embeddings, method='PCA')
+emb_ct = len(st.session_state['embeddings'].items())
+if emb_ct > 1:
+    embeddings = list(st.session_state['embeddings'].values())
+    embeddings_2d = reduce_dimensions(embeddings, method='PCA')
+
+    def cluster_embeddings(embeddings, n_clusters=min(3, emb_ct)):
+        kmeans = KMeans(n_clusters=n_clusters)
+        return kmeans.fit_predict(embeddings)
 
 
 # Plot in Streamlit
 
-
-with colx1:
-    st.write("Plotting PCA for DESCRIPTION EMBEDDINGS")
     emb_keys_list = list(st.session_state['names'].values())
-    plot_embeddings_2d(embeddings_2d, keys=emb_keys_list)
-def cluster_embeddings(embeddings, n_clusters=3):
-    kmeans = KMeans(n_clusters=n_clusters)
-    return kmeans.fit_predict(embeddings)
+ 
 
-labels = cluster_embeddings(embeddings_2d)
-with colx2:
-    st.write("Plotting CLUSTERING for DESCRIPTION EMBEDDINGS")
-    plot_embeddings_2d(embeddings_2d, labels)
+
+    labels = cluster_embeddings(embeddings_2d)
+    with colx2:
+        st.write("Plotting PCA & CLUSTERING for DESCRIPTION EMBEDDINGS")
+        plot_embeddings_2d(embeddings_2d,keys=emb_keys_list, labels=labels)
 
 
 
-with colx3:
-    st.write("Plotting PCA for IMAGE EMBEDDINGS")
 
     img_embeddings = list(st.session_state['img_embeddings'].values())
     img_embeddings_array = np.array(img_embeddings)
 
     # img_embeddings_reshaped = img_embeddings_array.reshape(img_embeddings_array.shape[0], -1)
     img_embeddings_reshaped = img_embeddings_array
-
     img_embeddings_2d = reduce_dimensions(img_embeddings_reshaped, method='PCA')
-    plot_embeddings_2d(img_embeddings_2d)
 
-with colx4:
-    st.write("Plotting CLUSTERING for IMAGE EMBEDDINGS")
+    with colx4:
+        st.write("Plotting PCA & CLUSTERING for IMAGE EMBEDDINGS")
 
-    labels = cluster_embeddings(img_embeddings_2d)
-    plot_embeddings_2d(img_embeddings_2d, labels)
+        labels = cluster_embeddings(img_embeddings_2d)
+        plot_embeddings_2d(img_embeddings_2d, keys=emb_keys_list, labels=labels)
 
 
 
